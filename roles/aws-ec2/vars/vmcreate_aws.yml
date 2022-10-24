@@ -1,0 +1,92 @@
+---
+- name: "Run the playbook for AWS resources provisioning."
+  hosts: localhost
+  connection: local
+  vars:
+#    aws_region: ap-south-1
+    aws_region: us-east-1
+    sg_name: awx_sg
+    keypair: useast1keypair2
+    vmimage: ami-06640050dc3f556bb
+    instancetype: t2.micro
+  tasks:
+############################## Create VPC ######################33
+    - name: "Create VPC with cidr block"
+      ec2_vpc_net:
+        name: "awx_vpc"
+        cidr_block: 10.10.0.0/16
+        region: "{{ aws_region }}"
+        tags:
+          module: ec2_vpc_net
+          this: works
+        tenancy: default
+      register: awx_vpc
+############################ Create Internet Gateway ################
+    
+    - name: "Create Internet Gateway and Associate it with above VPC"
+      ec2_vpc_igw:
+        vpc_id: "{{ awx_vpc.vpc.id }}"
+        region: "{{ aws_region }}"
+        state: present
+      register: awx_igw
+
+#########################  Create a subnet in above VPC ##################
+
+    - name: "Create a subnet in the above VPC"
+      ec2_vpc_subnet:
+        state: present
+        vpc_id: "{{ awx_vpc.vpc.id }}"
+        cidr: 10.10.0.0/20
+        region: "{{ aws_region }}"
+        tags:
+          Name: "EC2 Instance Subnet"
+      register: awx_subnet
+
+######################## Setup Public Subnet route table ####################
+
+    - name: "Setup Public Subnet route table"
+      ec2_vpc_route_table:
+        vpc_id: "{{ awx_vpc.vpc.id }}"
+        region: "{{ aws_region }}"
+        tags:
+          Name: Public
+        subnets:
+          - "{{ awx_subnet.subnet.id }}"
+        routes:
+          - dest: 0.0.0.0/0
+            gateway_id: "{{ awx_igw.gateway_id }}"
+      register: awx_public_route_table
+
+###################### Create AWS Security Group rules ##################
+    - name: "Task to Create AWS Security Group rules for EC2 Instance"
+      ec2_group:
+        name: "{{ sg_name }}"
+        description: "sg for allowing ssh connections"
+        vpc_id: "{{ awx_vpc.vpc.id }}"
+        region: "{{ aws_region }}"
+        rules:
+          - proto: tcp
+            ports:
+              - 22
+            cidr_ip: 0.0.0.0/0
+            rule_desc: allow all connections on port 22
+
+#################### Creating EC2 Instance #######################
+
+    - name: "Task to Provisioning of a RHEL8 EC2 Instance"
+      ec2:
+        region: "{{ aws_region }}"
+        key_name: "{{ keypair }}"
+        instance_type: "{{ instancetype }}"
+        image: "{{ vmimage }}"
+        wait: yes
+        group: "{{ sg_name }}"
+        count: 1
+        vpc_subnet_id: "{{ awx_subnet.subnet.id }}"
+        assign_public_ip: yes
+      register: awx_instance
+
+
+    - name: "Debug task to show the public IP of RHEL8 EC2 Instance"
+      debug:
+        msg: "Public IP of the RHEL8 Instance is {{ awx_instance.instances[0].public_ip }}"

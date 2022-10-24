@@ -1,0 +1,19 @@
+---
+# tasks file for haproxy
+ 
+
+ - name: "Installing Haproxy ..."
+   package:
+     name: "{{ package_name }}"
+     state: present
+
+ - name: "Starting the Haproxy Service.."
+   service:
+     name: "{{ package_name }}"
+     state: started
+
+ - name: "Configuring Haproxy"
+   template: 
+     src: "/task15/haproxy/templates/haproxy.cfg"
+     dest: "/etc/haproxy/haproxy.cfg"
+   notify: "restart service"

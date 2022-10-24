@@ -1,0 +1,8 @@
+---
+# vars file for aws-ec2
+amiimageid: "ami-06640050dc3f556bb"
+region: "us-east-1"
+#securitygrpid: "sg-05df6fed493a68d1b"
+securitygrpid: "awx_sg"
+key: "useast1keypair2"
+workernodes: 2

@@ -1,0 +1,54 @@
+---
+# tasks file for aws-ec2
+#
+- name: "k8s-master"
+  ec2:
+          count: 1
+          image: "{{ amiimageid }}"
+          instance_type: t2.micro
+          region: "{{ region }}"
+          instance_tags:
+            Name: master
+          group: "{{ securitygrpid }}"
+          key_name: "{{ key }}"
+          aws_access_key: "{{ access_key }}"
+          aws_secret_key: "{{ secret_key }}"
+          state: present
+          wait: yes
+
+- name: "k8s-worker"
+  ec2:
+          count: "{{ workernodes }}"
+          image: "{{ amiimageid }}"
+          instance_type: t2.micro
+          region: "{{ region }}"
+          instance_tags:
+            Name: worker
+          group: "{{ securitygrpid }}"
+          key_name: "{{ key }}"
+          state: present
+          aws_access_key: "{{ access_key }}"
+          aws_secret_key: "{{ secret_key }}"
+          state: present
+          wait: yes
+        
+
+
+  #  - name: "Task to Provisioning of a RHEL8 EC2 Instance"
+  #    ec2:
+  #      region: "{{ aws_region }}"
+  #      key_name: "{{ keypair }}"
+  #      instance_type: "{{ instancetype }}"
+  #      image: "{{ vmimage }}"
+  #      wait: yes
+  #      group: "{{ sg_name }}"
+  #      count: 1
+  #      vpc_subnet_id: "{{ awx_subnet.subnet.id }}"
+  #      assign_public_ip: yes
+  #    register: awx_instance
+
+
+- name: "Debug task to show the public IP of RHEL8 EC2 Instance"
+  debug:
+     msg: "Public IP of the RHEL8 Instance is {{ awx_instance.instances[0].public_ip }}"
+

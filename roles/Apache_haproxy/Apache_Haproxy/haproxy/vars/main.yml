@@ -1,0 +1,5 @@
+---
+# vars file for haproxy
+ 
+package_name : "haproxy"
+port: 8080

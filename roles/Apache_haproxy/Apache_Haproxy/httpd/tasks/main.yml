@@ -1,0 +1,26 @@
+---
+# tasks file for httpd
+
+
+
+- name: "Installing the Apache Server"
+  package:
+    name: "{{ p_name }}"
+    state: present 
+
+- name: copying Webpages 
+  template:
+     src: "/task15/httpd/templates/index.html" 
+     dest: "/var/www/html/index.html"
+  notify: "Restart Service"
+
+- name: "Starting Apache Service "
+  service: 
+    name: "{{ p_name }}"
+    state: started
+
+- name: "Configure with Firewall" 
+  firewalld: 
+    state: enabled
+    port: 8080/tcp
+    permanent: yes

@@ -1,0 +1,6 @@
+---
+- hosts: localhost
+  vars_files:
+    - /var/lib/awx/projects/AWS/credentials.yml
+  roles:
+    - aws-ec2
